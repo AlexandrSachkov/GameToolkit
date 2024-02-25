@@ -154,12 +154,12 @@ namespace AGT {
             }
 
             
-            auto threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
-            auto durationNs = Timer::GetTimeSinceEpochNs();
+            size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
+            uint64_t timestampNs = Timer::GetTimeSinceEpochNs();
 
             LogEntryBuilder builder(m_lineBuffer);
             builder.WriteLine("[%llu][%s][pid=%i][tid=%lu][%s | %s() | %i]",
-                durationNs,
+                timestampNs,
                 LogLevelToString(level),
                 m_PID,
                 threadId,
