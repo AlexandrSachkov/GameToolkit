@@ -21,24 +21,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 #pragma once
 
-#include "ILoggerSink.h"
+#include "LogLevel.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <utility>
 
 namespace AGT {
-    class LoggerDebuggerSink : public ILoggerSink {
+    template<typename T>
+    class ILogger {
     public:
-        LoggerDebuggerSink() = default;
-
-        void Write(const char* msg, size_t /*size*/) override {
-            OutputDebugStringA(msg);
+        template<typename... Args>
+        void Write(
+            LogLevel level,
+            const char* file,
+            const char* function,
+            int lineNumber,
+            const char* format,
+            Args&&... args
+        ) noexcept {
+            static_cast<T*>(this)->Write(level, file, function, lineNumber, format, std::forward<Args>(args)...);
         }
 
-    private:
-        LoggerDebuggerSink(const LoggerFileSink&) = delete;
-        LoggerDebuggerSink& operator=(const LoggerFileSink&) = delete;
+        void Flush() noexcept {
+            static_cast<T*>(this)->Flush();
+        }
     };
 }

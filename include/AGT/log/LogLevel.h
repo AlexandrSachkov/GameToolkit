@@ -24,49 +24,26 @@ SOFTWARE.
 
 #pragma once
 
-#include "ILoggerSink.h"
-
-#include <filesystem>
-#include <fstream>
-#include <vector>
-
 namespace AGT {
-    class LoggerFileSink : public ILoggerSink {
-    public:
-        LoggerFileSink() = default;
-
-        ~LoggerFileSink() {
-            if (m_file.is_open()) {
-                m_file.close();
-            }
-        }
-
-        bool Init(const std::filesystem::path& path, size_t buffSize = 0) {
-            if (buffSize > 0) {
-                m_buffer.resize(buffSize);
-                m_file.rdbuf()->pubsetbuf(&m_buffer.front(), m_buffer.size());
-            }
-
-            m_file.open(path.c_str(), std::ios::trunc);
-            return m_file.is_open();
-        }
-
-        void Write(const char* msg, size_t size) override {
-            if (!m_file.is_open()) {
-                return;
-            }
-
-            m_file.write(msg, size);
-        }
-
-        void Flush() override {
-            m_file.flush();
-        }
-    private:
-        LoggerFileSink(const LoggerFileSink&) = delete;
-        LoggerFileSink& operator=(const LoggerFileSink&) = delete;
-
-        std::ofstream m_file;
-        std::vector<char> m_buffer;
+    enum class LogLevel {
+        Error = 0,
+        Warning = 1,
+        InfoV1 = 2, // low noise
+        InfoV2 = 3, // medium noise
+        InfoV3 = 4, // high noise
+        Debug = 5
     };
+
+    static const char* LogLevelToString(LogLevel level) noexcept {
+        switch (level) {
+        case LogLevel::Error:   return "Error";
+        case LogLevel::Warning: return "Warning";
+        case LogLevel::InfoV1:  return "InfoV1";
+        case LogLevel::InfoV2:  return "InfoV2";
+        case LogLevel::InfoV3:  return "InfoV3";
+        case LogLevel::Debug:   return "Debug";
+        default:
+            return "Unknown";
+        }
+    }
 }
