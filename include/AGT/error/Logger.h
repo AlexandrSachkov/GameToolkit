@@ -183,8 +183,6 @@ namespace AGT {
             }
         }
 
-        static const int BufferSize{ 4096 };
-        static const int MaxLineLength{ BufferSize - 200 };
     private:
         Logger(const Logger&) = delete;
         Logger& operator=(const Logger&) = delete;
