@@ -102,16 +102,16 @@ namespace AGT {
     class Logger {
     public:
         static bool Init(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks) noexcept {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<SpinLock> lock(s_lock);
 
-            m_maxLevel = maxLevel;
-            m_lineBuffer.resize(maxLineSize);
-            m_PID = _getpid();
+            s_maxLevel = maxLevel;
+            s_lineBuffer.resize(maxLineSize);
+            s_PID = _getpid();
 
-            m_sinks.reserve(sinks.size());
+            s_sinks.reserve(sinks.size());
 
             for (auto& sink : sinks) {
-                m_sinks.emplace_back(std::move(sink));
+                s_sinks.emplace_back(std::move(sink));
             }
 
             return true;
@@ -120,8 +120,8 @@ namespace AGT {
         static void Destroy() noexcept {
             Flush();
 
-            std::lock_guard<SpinLock> lock(m_lock);
-            m_sinks.clear();
+            std::lock_guard<SpinLock> lock(s_lock);
+            s_sinks.clear();
         }
 
         template<typename... Args>
@@ -133,9 +133,9 @@ namespace AGT {
             const char* format, 
             Args&&... args
         ) noexcept {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<SpinLock> lock(s_lock);
 
-            if (static_cast<int>(level) > static_cast<int>(m_maxLevel)) {
+            if (static_cast<int>(level) > static_cast<int>(s_maxLevel)) {
                 return;
             }
 
@@ -157,11 +157,11 @@ namespace AGT {
             size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
             uint64_t timestampNs = Timer::GetTimeSinceEpochNs();
 
-            LogEntryBuilder builder(m_lineBuffer);
+            LogEntryBuilder builder(s_lineBuffer);
             builder.WriteLine("[%llu][%s][pid=%i][tid=%lu][%s | %s() | %i]",
                 timestampNs,
                 LogLevelToString(level),
-                m_PID,
+                s_PID,
                 threadId,
                 fileName,
                 function,
@@ -170,15 +170,15 @@ namespace AGT {
             builder.WriteLine(format, std::forward<Args>(args)...);
             builder.EndLine();
 
-            for (auto& sink : m_sinks) {
-                sink->Write(m_lineBuffer.data(), builder.GetSize());
+            for (auto& sink : s_sinks) {
+                sink->Write(s_lineBuffer.data(), builder.GetSize());
             }
         }
 
         static void Flush() noexcept {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<SpinLock> lock(s_lock);
 
-            for (auto& sink : m_sinks) {
+            for (auto& sink : s_sinks) {
                 sink->Flush();
             }
         }
@@ -187,11 +187,11 @@ namespace AGT {
         Logger(const Logger&) = delete;
         Logger& operator=(const Logger&) = delete;
 
-        static inline SpinLock m_lock;
-        static inline LogLevel m_maxLevel{ LogLevel::Debug };
-        static inline std::vector<char> m_lineBuffer;
-        static inline std::vector<std::unique_ptr<ILoggerSink>> m_sinks;
-        static inline int m_PID{0};
+        static inline SpinLock s_lock;
+        static inline LogLevel s_maxLevel{ LogLevel::Debug };
+        static inline std::vector<char> s_lineBuffer;
+        static inline std::vector<std::unique_ptr<ILoggerSink>> s_sinks;
+        static inline int s_PID{0};
     };
 
 #define AGT_LOG(level, format, ...) AGT::Logger::Write(level, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
