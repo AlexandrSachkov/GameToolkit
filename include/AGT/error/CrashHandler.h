@@ -25,19 +25,20 @@ SOFTWARE.
 #pragma once
 
 #include "../platform/Platform.h"
-
-
 #include "../log/DefaultLoggerConfig.h"
 
 #include <functional>
+#include <signal.h>
+
+#ifdef AGT_PLAT_WINDOWS
 #include <Windows.h>
 #include <Dbghelp.h>
-#include <signal.h>
+#endif
 
 namespace AGT {
     class CrashHandler {
     public:
-        static bool Init(const std::function<void()>& fOnTerminate, const char* crashDumpPath = nullptr) {
+        static bool Init(const char* crashDumpPath, const std::function<void()>& fOnTerminate) {
             m_fOnTerminate = fOnTerminate;
             m_crashDumpPath = crashDumpPath;
 
@@ -60,6 +61,8 @@ namespace AGT {
             if (m_crashDumpPath) {
 #ifdef AGT_PLAT_WINDOWS
                 SaveMinidump(ex, m_crashDumpPath);
+#else
+                //TODO add platform support
 #endif
             }
             
