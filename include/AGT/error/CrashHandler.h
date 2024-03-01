@@ -27,6 +27,8 @@ SOFTWARE.
 #include "../platform/Platform.h"
 #include "../log/DefaultLoggerConfig.h"
 
+#include <atomic>
+#include <exception>
 #include <functional>
 #include <signal.h>
 
@@ -36,31 +38,45 @@ SOFTWARE.
 #endif
 
 namespace AGT {
+    enum class MinidumpSize {
+        None,
+        Small,
+        Medium,
+        Large
+    };
+
     class CrashHandler {
     public:
-        static bool Init(const char* crashDumpPath, const std::function<void()>& fOnTerminate) {
+        static void Init(MinidumpSize minidumpSize, const char* crashDumpPath, const std::function<void()>& fOnTerminate) noexcept {
+            m_minidumpSize = minidumpSize;
             m_fOnTerminate = fOnTerminate;
             m_crashDumpPath = crashDumpPath;
 
             SetUnhandledExceptionFilter(::AGT::CrashHandler::UnhandledExceptionHandler);
-            std::set_terminate(::AGT::CrashHandler::TerminateHandler);
             signal(SIGABRT, &::AGT::CrashHandler::AbortHandler);
-
-            return true;
         }
 
     private:
         static void AbortHandler(int) {
             AGT_ERR("Abort called. Terminating program.");
+
+#ifdef AGT_PLAT_WINDOWS
+            __try {
+                int* createException = nullptr;
+                *createException = 1;
+            } __except (UnhandledExceptionHandler(GetExceptionInformation())) {}
+#else
+            //TODO is it possibe to get the current exception
             m_fOnTerminate();
+#endif
         }
 
-        static LONG CALLBACK UnhandledExceptionHandler(EXCEPTION_POINTERS* ex) {
+        static LONG CALLBACK UnhandledExceptionHandler(EXCEPTION_POINTERS* ex) noexcept {
             AGT_ERR("Unhanded exception was thrown. Terminating program.");
 
-            if (m_crashDumpPath) {
+            if (m_minidumpSize != MinidumpSize::None && m_crashDumpPath && !m_minidumpGenerated) {
 #ifdef AGT_PLAT_WINDOWS
-                SaveMinidump(ex, m_crashDumpPath);
+                SaveMinidump(ex, m_crashDumpPath, m_minidumpSize);
 #else
                 //TODO add platform support
 #endif
@@ -70,13 +86,8 @@ namespace AGT {
             return EXCEPTION_CONTINUE_SEARCH;
         }
 
-        static void TerminateHandler() {
-            AGT_ERR("Terminate called. Terminating program.");
-            m_fOnTerminate();
-        }
-
 #ifdef AGT_PLAT_WINDOWS
-        static void SaveMinidump(EXCEPTION_POINTERS* ex, const char* crashDumpPath) {
+        static void SaveMinidump(EXCEPTION_POINTERS* ex, const char* crashDumpPath, MinidumpSize size) noexcept {
             AGT_INFO("Attempting to generate a minidump.");
 
             static const char* LIB_NAME = "dbghelp";
@@ -105,11 +116,33 @@ namespace AGT {
             exceptionInfo.ExceptionPointers = ex;
             exceptionInfo.ClientPointers = FALSE;
 
+            int type = MiniDumpNormal;
+            if (size == MinidumpSize::Large) {
+                type |= MiniDumpWithDataSegs
+                    | MiniDumpWithPrivateReadWriteMemory
+                    | MiniDumpWithHandleData
+                    | MiniDumpWithFullMemory
+                    | MiniDumpWithFullMemoryInfo
+                    | MiniDumpWithThreadInfo
+                    | MiniDumpWithUnloadedModules
+                    | MiniDumpWithProcessThreadData;
+            } else if (size == MinidumpSize::Medium) {
+                type |= MiniDumpWithDataSegs
+                    | MiniDumpWithPrivateReadWriteMemory
+                    | MiniDumpWithHandleData
+                    | MiniDumpWithFullMemoryInfo
+                    | MiniDumpWithThreadInfo
+                    | MiniDumpWithUnloadedModules;
+            } else {
+                type |= MiniDumpWithIndirectlyReferencedMemory
+                    | MiniDumpScanMemory;
+            }
+
             auto dumped = fMiniDumpWriteDump(
                 GetCurrentProcess(),
                 GetCurrentProcessId(),
                 hFile,
-                MINIDUMP_TYPE(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory),
+                (MINIDUMP_TYPE)type,
                 ex ? &exceptionInfo : nullptr,
                 nullptr,
                 nullptr);
@@ -118,14 +151,16 @@ namespace AGT {
                 AGT_ERR("Failed to write crash dump: GetLastError=%i", GetLastError());
             } else {
                 AGT_INFO("Minidump generated successfully");
+                m_minidumpGenerated = true;
             }
 
             CloseHandle(hFile);
         }
 #endif
-
+        static inline MinidumpSize m_minidumpSize{ MinidumpSize::Small };
         static inline const char* m_crashDumpPath{ nullptr };
         static inline std::function<void()> m_fOnTerminate;
+        static inline std::atomic_bool m_minidumpGenerated{ false };
     };
     
 }
