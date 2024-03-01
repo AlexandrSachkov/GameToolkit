@@ -30,6 +30,10 @@ SOFTWARE.
 namespace AGT {
     class Timer {
     public:
+        Timer() noexcept {
+            GetAndUpdateDeltaTMs();
+        }
+
         static uint64_t GetTimeSinceEpochNs() noexcept {
             auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
             return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
