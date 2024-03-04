@@ -24,9 +24,9 @@ SOFTWARE.
 
 #pragma once
 
-#if !defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
-
 #ifdef AGT_ENABLE_LOGGING
+
+#if !defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
 
 #include "DefaultLogger.h"
 #include "Log.h"
@@ -44,8 +44,14 @@ SOFTWARE.
 
 #endif //AGT_ENABLE_DEBUG_LOG
 
+#endif !defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
+
+#else
+
+#define AGT_ERR(format, ...)
+#define AGT_WARN(format, ...)
+#define AGT_INFO(format, ...)
+#define AGT_VERBOSE(format, ...)
+#define AGT_DEBUG(format, ...)  
+
 #endif //AGT_ENABLE_LOGGING
-
-
-
-#endif //!defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
