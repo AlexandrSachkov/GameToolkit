@@ -28,7 +28,7 @@ namespace AGT {
     class ILoggerSink {
     public:
         virtual ~ILoggerSink() noexcept {}
-        virtual void Write(const char* /*msg*/, size_t /*size*/) noexcept {};
-        virtual void Flush() noexcept {};
+        virtual void Write(const char* /*msg*/, size_t /*size*/) {};
+        virtual void Flush() {};
     };
 }

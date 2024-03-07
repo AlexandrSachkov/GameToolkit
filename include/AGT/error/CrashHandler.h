@@ -57,7 +57,7 @@ namespace AGT {
         }
 
     private:
-        static void AbortHandler(int) {
+        static void AbortHandler(int) noexcept {
             AGT_ERR("Abort called. Terminating program.");
 
 #ifdef AGT_PLAT_WINDOWS

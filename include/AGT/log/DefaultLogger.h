@@ -82,7 +82,7 @@ namespace AGT {
 
     class DefaultLogger : public ILogger<DefaultLogger> {
     public:
-        static std::unique_ptr<DefaultLogger> Create(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks)  noexcept {
+        static std::unique_ptr<DefaultLogger> Create(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks) {
             auto logger = std::unique_ptr<DefaultLogger>(new DefaultLogger());
             if (logger && logger->Init(maxLevel, maxLineSize, sinks)) {
                 return logger;
@@ -104,7 +104,7 @@ namespace AGT {
             m_PID = std::move(other.m_PID);
         }
 
-        ~DefaultLogger() noexcept {
+        ~DefaultLogger() {
             Flush();
         }
 
@@ -116,7 +116,7 @@ namespace AGT {
             int lineNumber,
             const char* format,
             Args&&... args
-        ) noexcept {
+        ) {
             std::lock_guard<SpinLock> lock(m_lock);
 
             if (static_cast<int>(level) > static_cast<int>(m_maxLevel)) {
@@ -160,7 +160,7 @@ namespace AGT {
             }
         }
 
-        void Flush() noexcept {
+        void Flush() {
             std::lock_guard<SpinLock> lock(m_lock);
 
             for (auto& sink : m_sinks) {
@@ -174,7 +174,7 @@ namespace AGT {
 
         DefaultLogger() noexcept = default;
 
-        bool Init(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks) noexcept {
+        bool Init(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks) {
             std::lock_guard<SpinLock> lock(m_lock);
 
             m_maxLevel = maxLevel;

@@ -34,7 +34,7 @@ namespace AGT {
     template<typename T>
     class Log {
     public:
-        static void SetLogger(const std::shared_ptr<ILogger<T>>& logger) {
+        static void SetLogger(const std::shared_ptr<ILogger<T>>& logger) noexcept {
             m_logger = logger;
         }
 
@@ -46,13 +46,13 @@ namespace AGT {
             int lineNumber,
             const char* format, 
             Args&&... args
-        ) noexcept {
+        ) {
             if (m_logger) {
                 m_logger->Write(level, file, function, lineNumber, format, std::forward<Args>(args)...);
             }
         }
 
-        static void Flush() noexcept {
+        static void Flush() {
             if (m_logger) {
                 m_logger->Flush();
             }

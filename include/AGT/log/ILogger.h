@@ -40,11 +40,11 @@ namespace AGT {
             int lineNumber,
             const char* format,
             Args&&... args
-        ) noexcept {
+        ) {
             static_cast<T*>(this)->Write(level, file, function, lineNumber, format, std::forward<Args>(args)...);
         }
 
-        void Flush() noexcept {
+        void Flush() {
             static_cast<T*>(this)->Flush();
         }
     };

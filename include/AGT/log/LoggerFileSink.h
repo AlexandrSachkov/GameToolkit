@@ -40,7 +40,7 @@ namespace AGT {
             }
         }
 
-        static std::unique_ptr<LoggerFileSink> Create(const char* path, size_t buffSize = 0) noexcept {
+        static std::unique_ptr<LoggerFileSink> Create(const char* path, size_t buffSize = 0) {
             auto sink = std::unique_ptr<LoggerFileSink>(new LoggerFileSink());
             if (sink && sink->Init(path, buffSize)) {
                 return sink;
@@ -49,7 +49,7 @@ namespace AGT {
             return nullptr;
         }
 
-        void Write(const char* msg, size_t size) noexcept override {
+        void Write(const char* msg, size_t size) override {
             if (!m_file.is_open()) {
                 return;
             }
@@ -57,7 +57,7 @@ namespace AGT {
             m_file.write(msg, size);
         }
 
-        void Flush() noexcept override {
+        void Flush() override {
             m_file.flush();
         }
     private:
@@ -66,7 +66,7 @@ namespace AGT {
 
         LoggerFileSink() noexcept = default;
 
-        bool Init(const char* path, size_t buffSize) noexcept {
+        bool Init(const char* path, size_t buffSize) {
             if (buffSize > 0) {
                 m_buffer.resize(buffSize);
                 m_file.rdbuf()->pubsetbuf(&m_buffer.front(), m_buffer.size());
