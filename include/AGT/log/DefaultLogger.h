@@ -25,7 +25,6 @@ SOFTWARE.
 #pragma once
 
 #include "../platform/Platform.h"
-#include "../thread/SpinLock.h"
 #include "ILogger.h"
 #include "ILoggerSink.h"
 #include "LogLevel.h"
@@ -117,7 +116,7 @@ namespace AGT {
             const char* format,
             Args&&... args
         ) {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<std::mutex> lock(m_lock);
 
             if (static_cast<int>(level) > static_cast<int>(m_maxLevel)) {
                 return;
@@ -161,7 +160,7 @@ namespace AGT {
         }
 
         void Flush() {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<std::mutex> lock(m_lock);
 
             for (auto& sink : m_sinks) {
                 sink->Flush();
@@ -175,7 +174,7 @@ namespace AGT {
         DefaultLogger() noexcept = default;
 
         bool Init(LogLevel maxLevel, size_t maxLineSize, std::span<std::unique_ptr<ILoggerSink>> sinks) {
-            std::lock_guard<SpinLock> lock(m_lock);
+            std::lock_guard<std::mutex> lock(m_lock);
 
             m_maxLevel = maxLevel;
             m_lineBuffer.resize(maxLineSize);
@@ -190,7 +189,7 @@ namespace AGT {
             return true;
         }
 
-        SpinLock m_lock;
+        std::mutex m_lock;
         LogLevel m_maxLevel{ LogLevel::Debug };
         std::vector<char> m_lineBuffer;
         std::vector<std::unique_ptr<ILoggerSink>> m_sinks;
