@@ -22,48 +22,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 #pragma once
 
-#include "ILogger.h"
-#include "LogLevel.h"
+#ifdef AGT_ENABLE_LOGGING
 
-#include <memory>
+#if !defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
+
+#include "DefaultLogger.h"
+#include "DefaultLogFormatter.h"
+#include "../other/StaticHolder.h"
 
 namespace AGT {
-    template<typename T>
-    class Log {
-    public:
-        static void SetLogger(const std::shared_ptr<ILogger<T>>& logger) noexcept {
-            m_logger = logger;
-        }
-
-        template<typename... Args>
-        static void Write(
-            LogLevel level, 
-            const char* file, 
-            const char* function,
-            int lineNumber,
-            const char* format, 
-            Args&&... args
-        ) {
-            if (m_logger) {
-                m_logger->Write(level, file, function, lineNumber, format, std::forward<Args>(args)...);
-            }
-        }
-
-        static void Flush() {
-            if (m_logger) {
-                m_logger->Flush();
-            }
-        }
-
-    private:
-        Log(const Log&) = delete;
-        Log& operator=(const Log&) = delete;
-
-        static inline std::shared_ptr<ILogger<T>> m_logger;
-    };
+    using LoggerT = AGT::DefaultLogger<AGT::DefaultLogFormatter>;
 }
 
-#define AGT_LOG_T(T, level, format, ...) AGT::Log<T>::Write(level, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+#define AGT_ERR(format, ...)        AGT::StaticHolder<AGT::LoggerT>::Get()->Write(AGT::LogLevel::Error, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+#define AGT_WARN(format, ...)       AGT::StaticHolder<AGT::LoggerT>::Get()->Write(AGT::LogLevel::Warning, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+#define AGT_INFO(format, ...)       AGT::StaticHolder<AGT::LoggerT>::Get()->Write(AGT::LogLevel::InfoV1, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+#define AGT_VERBOSE(format, ...)    AGT::StaticHolder<AGT::LoggerT>::Get()->Write(AGT::LogLevel::InfoV3, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+
+#ifdef AGT_ENABLE_DEBUG_LOG
+#define AGT_DEBUG(format, ...)      AGT::StaticHolder<AGT::LoggerT>::Get()->Write(AGT::LogLevel::Debug, __FILE__, __func__, __LINE__, format, __VA_ARGS__)
+
+#else
+#define AGT_DEBUG(format, ...) 
+
+#endif //AGT_ENABLE_DEBUG_LOG
+
+#endif !defined(AGT_ERR) && !defined(AGT_WARN) && !defined(AGT_INFO) && !defined(AGT_VERBOSE) && !defined(AGT_DEBUG)
+
+#else
+
+#define AGT_ERR(format, ...)
+#define AGT_WARN(format, ...)
+#define AGT_INFO(format, ...)
+#define AGT_VERBOSE(format, ...)
+#define AGT_DEBUG(format, ...)  
+
+#endif //AGT_ENABLE_LOGGING
