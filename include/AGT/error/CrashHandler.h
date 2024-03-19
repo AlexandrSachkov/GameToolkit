@@ -25,7 +25,7 @@ SOFTWARE.
 #pragma once
 
 #include "../platform/Platform.h"
-#include "../log/DefaultLoggerConfig.h"
+#include "../log/Log.h"
 
 #include <atomic>
 #include <exception>
@@ -57,6 +57,12 @@ namespace AGT {
         }
 
     private:
+        CrashHandler() = delete;
+        CrashHandler(const CrashHandler&) = delete;
+        CrashHandler& operator=(const CrashHandler&) = delete;
+
+        ~CrashHandler() = default;
+
         static void AbortHandler(int) noexcept {
             AGT_ERR("Abort called. Terminating program.");
 
