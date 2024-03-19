@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="CrashHandler.cpp">
+      <Filter>error</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>log</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="error">
+      <UniqueIdentifier>{e0333f61-cee5-40ca-bccc-e830475081d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="log">
+      <UniqueIdentifier>{64d6d59a-229f-4b8c-b025-53761da1f2cf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
